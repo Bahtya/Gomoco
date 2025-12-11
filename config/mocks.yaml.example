@@ -1,0 +1,37 @@
+# Gomoco Mock API 配置示例
+# 此文件展示了配置文件的格式
+# 实际配置文件 mocks.yaml 会在运行时自动生成和更新
+
+mocks:
+  - id: "550e8400-e29b-41d4-a716-446655440000"
+    name: "用户登录接口"
+    port: 9090
+    protocol: "http"
+    content: '{"code": 0, "message": "登录成功", "data": {"token": "abc123"}}'
+    charset: "UTF-8"
+    path: "/api/login"
+    method: "POST"
+
+  - id: "550e8400-e29b-41d4-a716-446655440001"
+    name: "获取用户信息"
+    port: 9091
+    protocol: "http"
+    content: '{"code": 0, "data": {"id": 1, "name": "张三"}}'
+    charset: "UTF-8"
+    path: "/api/user"
+    method: "GET"
+
+  - id: "550e8400-e29b-41d4-a716-446655440002"
+    name: "TCP 测试服务"
+    port: 9092
+    protocol: "tcp"
+    content: "Hello from TCP server"
+    charset: "UTF-8"
+
+  - id: "550e8400-e29b-41d4-a716-446655440003"
+    name: "GBK 编码测试"
+    port: 9093
+    protocol: "http"
+    content: "中文测试内容"
+    charset: "GBK"
+    path: "/test"

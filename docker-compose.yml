@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  gomoco:
+    image: gomoco:latest
+    container_name: gomoco
+    restart: unless-stopped
+    # 自定义启动命令（可选，修改端口）
+    # command: ["/gomoco", "-port", "9000"]
+    ports:
+      - "8080:8080"
+      # 如果修改了端口，需要同步修改映射
+      # - "9000:9000"
+      # 如果需要暴露 Mock API 端口，添加端口映射
+      # - "9090:9090"
+      # - "9091:9091"
+    volumes:
+      # 持久化配置文件
+      - ./config:/config
+    environment:
+      # 可以添加环境变量配置
+      - TZ=Asia/Shanghai
+    # 健康检查
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/api/mocks"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+# 使用方法:
+# 1. 构建镜像: docker build -t gomoco:latest .
+# 2. 启动服务: docker-compose up -d
+# 3. 查看日志: docker-compose logs -f
+# 4. 停止服务: docker-compose down
+#
+# 自定义端口:
+# 1. 取消注释 command 行并修改端口号
+# 2. 修改 ports 映射以匹配新端口
+# 3. 修改 healthcheck 中的端口号
