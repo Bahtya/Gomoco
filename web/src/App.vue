@@ -44,6 +44,7 @@
             <label for="protocol">协议 *</label>
             <select id="protocol" v-model="form.protocol" required :disabled="!!editingMock">
               <option value="http">HTTP</option>
+              <option value="https">HTTPS</option>
               <option value="tcp">TCP</option>
             </select>
           </div>
@@ -57,7 +58,7 @@
           </div>
         </div>
 
-        <div v-if="form.protocol === 'http'" class="form-row">
+        <div v-if="form.protocol === 'http' || form.protocol === 'https'" class="form-row">
           <div class="form-group">
             <label for="path">路径</label>
             <input
@@ -77,6 +78,30 @@
               <option value="PUT">PUT</option>
               <option value="DELETE">DELETE</option>
             </select>
+          </div>
+        </div>
+
+        <div v-if="form.protocol === 'https'" class="form-row">
+          <div class="form-group">
+            <label for="certFile">证书文件路径 *</label>
+            <input
+              id="certFile"
+              v-model="form.cert_file"
+              type="text"
+              :required="form.protocol === 'https'"
+              placeholder="例如: ./certs/server.crt"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="keyFile">私钥文件路径 *</label>
+            <input
+              id="keyFile"
+              v-model="form.key_file"
+              type="text"
+              :required="form.protocol === 'https'"
+              placeholder="例如: ./certs/server.key"
+            />
           </div>
         </div>
 
@@ -147,13 +172,17 @@
               <span class="detail-label">字符集</span>
               <span class="detail-value">{{ mock.charset }}</span>
             </div>
-            <div v-if="mock.protocol === 'http' && mock.path" class="detail-item">
+            <div v-if="(mock.protocol === 'http' || mock.protocol === 'https') && mock.path" class="detail-item">
               <span class="detail-label">路径</span>
               <span class="detail-value">{{ mock.path }}</span>
             </div>
-            <div v-if="mock.protocol === 'http' && mock.method" class="detail-item">
+            <div v-if="(mock.protocol === 'http' || mock.protocol === 'https') && mock.method" class="detail-item">
               <span class="detail-label">方法</span>
               <span class="detail-value">{{ mock.method }}</span>
+            </div>
+            <div v-if="mock.protocol === 'https' && mock.cert_file" class="detail-item">
+              <span class="detail-label">证书</span>
+              <span class="detail-value">{{ mock.cert_file }}</span>
             </div>
           </div>
 
@@ -186,7 +215,9 @@ export default {
         content: '',
         charset: 'UTF-8',
         path: '',
-        method: ''
+        method: '',
+        cert_file: '',
+        key_file: ''
       },
       alert: {
         show: false,
@@ -247,7 +278,9 @@ export default {
         content: mock.content,
         charset: mock.charset,
         path: mock.path || '',
-        method: mock.method || ''
+        method: mock.method || '',
+        cert_file: mock.cert_file || '',
+        key_file: mock.key_file || ''
       }
       window.scrollTo({ top: 0, behavior: 'smooth' })
     },
@@ -279,7 +312,9 @@ export default {
         content: '',
         charset: 'UTF-8',
         path: '',
-        method: ''
+        method: '',
+        cert_file: '',
+        key_file: ''
       }
     },
     showAlert(type, message) {

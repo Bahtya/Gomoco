@@ -42,3 +42,11 @@ Thumbs.db
 
 # Config files (keep example)
 config/mocks.yaml
+
+# SSL/TLS certificates
+certs/
+*.crt
+*.key
+*.pem
+*.pfx
+*.p12

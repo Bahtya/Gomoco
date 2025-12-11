@@ -3,10 +3,10 @@ package server
 import (
 	"context"
 	"fmt"
-	"net/http"
-	"time"
 	"gomoco/internal/models"
 	"gomoco/internal/utils"
+	"net/http"
+	"time"
 )
 
 // HTTPServer represents an HTTP mock server
@@ -25,7 +25,7 @@ func NewHTTPServer(mock *models.MockAPI) (*HTTPServer, error) {
 // Start starts the HTTP server
 func (s *HTTPServer) Start() error {
 	mux := http.NewServeMux()
-	
+
 	path := s.mock.Path
 	if path == "" {
 		path = "/"
@@ -64,8 +64,21 @@ func (s *HTTPServer) Start() error {
 	}
 
 	go func() {
-		if err := s.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			fmt.Printf("HTTP server error on port %d: %v\n", s.mock.Port, err)
+		var err error
+		if s.mock.Protocol == models.ProtocolHTTPS {
+			// HTTPS server
+			if s.mock.CertFile == "" || s.mock.KeyFile == "" {
+				fmt.Printf("HTTPS server error on port %d: certificate or key file not specified\n", s.mock.Port)
+				return
+			}
+			err = s.server.ListenAndServeTLS(s.mock.CertFile, s.mock.KeyFile)
+		} else {
+			// HTTP server
+			err = s.server.ListenAndServe()
+		}
+
+		if err != nil && err != http.ErrServerClosed {
+			fmt.Printf("%s server error on port %d: %v\n", s.mock.Protocol, s.mock.Port, err)
 		}
 	}()
 

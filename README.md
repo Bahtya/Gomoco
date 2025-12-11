@@ -4,7 +4,8 @@ Gomoco 是一个轻量级的 Mock Server 工具，灵感来源于 [Moco](https:/
 
 ## 功能特性
 
-- ✅ 支持 HTTP 和 TCP 协议
+- ✅ 支持 HTTP、HTTPS 和 TCP 协议
+- ✅ HTTPS 支持自定义 SSL/TLS 证书
 - ✅ 支持 UTF-8 和 GBK 字符集编码
 - ✅ 固定报文内容响应
 - ✅ 动态端口配置
@@ -156,11 +157,13 @@ gomoco [选项]
 2. 填写表单：
    - **API 名称**: 给 Mock API 起一个描述性的名称
    - **端口**: Mock 服务监听的端口 (1-65535)
-   - **协议**: HTTP 或 TCP
+   - **协议**: HTTP、HTTPS 或 TCP
    - **字符集**: UTF-8 或 GBK
    - **响应内容**: 固定返回的报文内容
-   - **路径** (HTTP): HTTP 请求路径，默认为 `/`
-   - **方法** (HTTP): HTTP 方法，留空表示任意方法
+   - **路径** (HTTP/HTTPS): HTTP 请求路径，默认为 `/`
+   - **方法** (HTTP/HTTPS): HTTP 方法，留空表示任意方法
+   - **证书文件** (HTTPS): SSL/TLS 证书文件路径
+   - **私钥文件** (HTTPS): SSL/TLS 私钥文件路径
 3. 点击"创建 Mock API"
 
 **注意**: 所有配置会自动保存到 `config/mocks.yaml` 文件中，重启后自动恢复。
@@ -185,6 +188,29 @@ gomoco [选项]
 curl http://localhost:9090/test
 ```
 
+#### HTTPS 示例
+```bash
+# 1. 生成自签名证书
+# Windows:
+.\generate-cert.ps1
+
+# Linux/macOS:
+chmod +x generate-cert.sh
+./generate-cert.sh
+
+# 2. 创建 HTTPS Mock API（使用生成的证书）
+# - 协议: HTTPS
+# - 端口: 9443
+# - 证书文件: certs/server.crt
+# - 私钥文件: certs/server.key
+
+# 3. 测试（-k 跳过证书验证）
+curl -k https://localhost:9443/test
+
+# 或使用浏览器访问（会显示安全警告，点击继续即可）
+# https://localhost:9443/test
+```
+
 #### TCP 示例
 ```bash
 # 假设创建了一个 TCP Mock API，端口 9091
@@ -194,6 +220,8 @@ echo "test" | nc localhost 9091
 ## API 接口
 
 ### 创建 Mock API
+
+**HTTP 示例：**
 ```http
 POST /api/mocks
 Content-Type: application/json
@@ -205,6 +233,24 @@ Content-Type: application/json
   "content": "Hello World",
   "charset": "UTF-8",
   "path": "/test",
+  "method": "GET"
+}
+```
+
+**HTTPS 示例：**
+```http
+POST /api/mocks
+Content-Type: application/json
+
+{
+  "name": "HTTPS 测试接口",
+  "port": 9443,
+  "protocol": "https",
+  "cert_file": "certs/server.crt",
+  "key_file": "certs/server.key",
+  "content": "Hello HTTPS",
+  "charset": "UTF-8",
+  "path": "/secure",
   "method": "GET"
 }
 ```

@@ -66,6 +66,8 @@ func (m *Manager) Create(req *models.CreateMockAPIRequest) (*models.MockAPI, err
 		Name:     req.Name,
 		Port:     req.Port,
 		Protocol: req.Protocol,
+		CertFile: req.CertFile,
+		KeyFile:  req.KeyFile,
 		Content:  req.Content,
 		Charset:  req.Charset,
 		Path:     req.Path,
@@ -195,7 +197,7 @@ func (m *Manager) startServer(mock *models.MockAPI) error {
 	var err error
 
 	switch mock.Protocol {
-	case models.ProtocolHTTP:
+	case models.ProtocolHTTP, models.ProtocolHTTPS:
 		server, err = NewHTTPServer(mock)
 	case models.ProtocolTCP:
 		server, err = NewTCPServer(mock)
