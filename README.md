@@ -4,8 +4,10 @@ Gomoco 是一个轻量级的 Mock Server 工具，灵感来源于 [Moco](https:/
 
 ## 功能特性
 
-- ✅ 支持 HTTP、HTTPS 和 TCP 协议
+- ✅ 支持 HTTP、HTTPS、TCP 和 FTP 协议
 - ✅ HTTPS 支持自定义 SSL/TLS 证书
+- ✅ FTP 支持主动/被动模式，Web 端文件管理
+- ✅ 文件上传限制 100MB
 - ✅ 支持 UTF-8 和 GBK 字符集编码
 - ✅ 固定报文内容响应
 - ✅ 动态端口配置
@@ -157,13 +159,18 @@ gomoco [选项]
 2. 填写表单：
    - **API 名称**: 给 Mock API 起一个描述性的名称
    - **端口**: Mock 服务监听的端口 (1-65535)
-   - **协议**: HTTP、HTTPS 或 TCP
+   - **协议**: HTTP、HTTPS、TCP 或 FTP
    - **字符集**: UTF-8 或 GBK
-   - **响应内容**: 固定返回的报文内容
+   - **响应内容**: 固定返回的报文内容（FTP 不需要）
    - **路径** (HTTP/HTTPS): HTTP 请求路径，默认为 `/`
    - **方法** (HTTP/HTTPS): HTTP 方法，留空表示任意方法
    - **证书文件** (HTTPS): SSL/TLS 证书文件路径
    - **私钥文件** (HTTPS): SSL/TLS 私钥文件路径
+   - **FTP 模式** (FTP): 主动模式或被动模式
+   - **根目录** (FTP): FTP 文件根目录，留空自动生成
+   - **用户名** (FTP): FTP 登录用户名，默认 admin
+   - **密码** (FTP): FTP 登录密码，默认 admin
+   - **被动端口范围** (FTP): 被动模式端口范围，如 50000-50100
 3. 点击"创建 Mock API"
 
 **注意**: 所有配置会自动保存到 `config/mocks.yaml` 文件中，重启后自动恢复。
@@ -217,6 +224,43 @@ curl -k https://localhost:9443/test
 echo "test" | nc localhost 9091
 ```
 
+#### FTP 示例
+```bash
+# 1. 在 Web 界面创建 FTP Mock API
+# - 协议: FTP
+# - 端口: 21
+# - FTP 模式: 被动模式
+# - 用户名: admin
+# - 密码: admin
+
+# 2. 使用 FTP 客户端连接
+ftp localhost 21
+# 输入用户名: admin
+# 输入密码: admin
+
+# 3. 或使用命令行工具
+curl -u admin:admin ftp://localhost:21/
+
+# 4. 上传文件
+curl -u admin:admin -T myfile.txt ftp://localhost:21/
+
+# 5. 下载文件
+curl -u admin:admin -O ftp://localhost:21/myfile.txt
+
+# 6. 使用 Web API 管理文件
+# 列出文件
+curl http://localhost:8080/api/mocks/{mock_id}/files
+
+# 上传文件（限制 100MB）
+curl -F "file=@myfile.txt" -F "path=/" http://localhost:8080/api/mocks/{mock_id}/files
+
+# 下载文件
+curl http://localhost:8080/api/mocks/{mock_id}/files/myfile.txt -O
+
+# 删除文件
+curl -X DELETE http://localhost:8080/api/mocks/{mock_id}/files/myfile.txt
+```
+
 ## API 接口
 
 ### 创建 Mock API
@@ -255,6 +299,24 @@ Content-Type: application/json
 }
 ```
 
+**FTP 示例：**
+```http
+POST /api/mocks
+Content-Type: application/json
+
+{
+  "name": "FTP 文件服务器",
+  "port": 21,
+  "protocol": "ftp",
+  "ftp_mode": "passive",
+  "ftp_root_dir": "./ftp_data/port_21",
+  "ftp_user": "admin",
+  "ftp_pass": "admin123",
+  "ftp_passive_port_range": "50000-50100",
+  "charset": "UTF-8"
+}
+```
+
 ### 获取所有 Mock API
 ```http
 GET /api/mocks
@@ -280,6 +342,32 @@ Content-Type: application/json
 ### 删除 Mock API
 ```http
 DELETE /api/mocks/:id
+```
+
+### FTP 文件管理 API
+
+#### 列出文件
+```http
+GET /api/mocks/:id/files?path=/subfolder
+```
+
+#### 上传文件（限制 100MB）
+```http
+POST /api/mocks/:id/files
+Content-Type: multipart/form-data
+
+file: <binary file data>
+path: /subfolder
+```
+
+#### 下载文件
+```http
+GET /api/mocks/:id/files/path/to/file.txt
+```
+
+#### 删除文件
+```http
+DELETE /api/mocks/:id/files/path/to/file.txt
 ```
 
 ## 项目结构

@@ -46,6 +46,7 @@
               <option value="http">HTTP</option>
               <option value="https">HTTPS</option>
               <option value="tcp">TCP</option>
+              <option value="ftp">FTP</option>
             </select>
           </div>
 
@@ -105,12 +106,66 @@
           </div>
         </div>
 
-        <div class="form-group">
+        <div v-if="form.protocol === 'ftp'">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="ftpMode">FTP 模式 *</label>
+              <select id="ftpMode" v-model="form.ftp_mode" :required="form.protocol === 'ftp'">
+                <option value="passive">被动模式 (Passive)</option>
+                <option value="active">主动模式 (Active)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="ftpRootDir">根目录</label>
+              <input
+                id="ftpRootDir"
+                v-model="form.ftp_root_dir"
+                type="text"
+                placeholder="例如: ./ftp_data/port_21 (留空自动生成)"
+              />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="ftpUser">用户名</label>
+              <input
+                id="ftpUser"
+                v-model="form.ftp_user"
+                type="text"
+                placeholder="默认: admin"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="ftpPass">密码</label>
+              <input
+                id="ftpPass"
+                v-model="form.ftp_pass"
+                type="password"
+                placeholder="默认: admin"
+              />
+            </div>
+          </div>
+
+          <div class="form-group" v-if="form.ftp_mode === 'passive'">
+            <label for="ftpPassivePortRange">被动模式端口范围</label>
+            <input
+              id="ftpPassivePortRange"
+              v-model="form.ftp_passive_port_range"
+              type="text"
+              placeholder="例如: 50000-50100 (留空使用默认)"
+            />
+          </div>
+        </div>
+
+        <div class="form-group" v-if="form.protocol !== 'ftp'">
           <label for="content">响应内容 *</label>
           <textarea
             id="content"
             v-model="form.content"
-            required
+            :required="form.protocol !== 'ftp'"
             placeholder="输入固定返回的报文内容..."
           ></textarea>
         </div>
@@ -184,13 +239,26 @@
               <span class="detail-label">证书</span>
               <span class="detail-value">{{ mock.cert_file }}</span>
             </div>
+            <div v-if="mock.protocol === 'ftp'" class="detail-item">
+              <span class="detail-label">FTP 模式</span>
+              <span class="detail-value">{{ mock.ftp_mode === 'passive' ? '被动模式' : '主动模式' }}</span>
+            </div>
+            <div v-if="mock.protocol === 'ftp' && mock.ftp_root_dir" class="detail-item">
+              <span class="detail-label">根目录</span>
+              <span class="detail-value">{{ mock.ftp_root_dir }}</span>
+            </div>
+            <div v-if="mock.protocol === 'ftp' && mock.ftp_user" class="detail-item">
+              <span class="detail-label">用户名</span>
+              <span class="detail-value">{{ mock.ftp_user }}</span>
+            </div>
           </div>
 
-          <div class="mock-content">{{ mock.content }}</div>
+          <div class="mock-content" v-if="mock.protocol !== 'ftp'">{{ mock.content }}</div>
 
           <div class="mock-actions">
             <button class="btn btn-success" @click="editMock(mock)">编辑</button>
             <button class="btn btn-danger" @click="deleteMock(mock.id)">删除</button>
+            <button v-if="mock.protocol === 'ftp'" class="btn btn-info" @click="manageFTPFiles(mock)">文件管理</button>
           </div>
         </div>
       </div>
@@ -217,7 +285,12 @@ export default {
         path: '',
         method: '',
         cert_file: '',
-        key_file: ''
+        key_file: '',
+        ftp_mode: 'passive',
+        ftp_root_dir: '',
+        ftp_user: '',
+        ftp_pass: '',
+        ftp_passive_port_range: ''
       },
       alert: {
         show: false,
@@ -275,12 +348,17 @@ export default {
         name: mock.name,
         port: mock.port,
         protocol: mock.protocol,
-        content: mock.content,
+        content: mock.content || '',
         charset: mock.charset,
         path: mock.path || '',
         method: mock.method || '',
         cert_file: mock.cert_file || '',
-        key_file: mock.key_file || ''
+        key_file: mock.key_file || '',
+        ftp_mode: mock.ftp_mode || 'passive',
+        ftp_root_dir: mock.ftp_root_dir || '',
+        ftp_user: mock.ftp_user || '',
+        ftp_pass: mock.ftp_pass || '',
+        ftp_passive_port_range: mock.ftp_passive_port_range || ''
       }
       window.scrollTo({ top: 0, behavior: 'smooth' })
     },
@@ -314,7 +392,12 @@ export default {
         path: '',
         method: '',
         cert_file: '',
-        key_file: ''
+        key_file: '',
+        ftp_mode: 'passive',
+        ftp_root_dir: '',
+        ftp_user: '',
+        ftp_pass: '',
+        ftp_passive_port_range: ''
       }
     },
     showAlert(type, message) {
@@ -322,6 +405,10 @@ export default {
       setTimeout(() => {
         this.alert.show = false
       }, 5000)
+    },
+    manageFTPFiles(mock) {
+      // 简单提示，实际可以打开一个文件管理对话框
+      this.showAlert('info', `FTP 文件管理功能：\n服务器: localhost:${mock.port}\n用户名: ${mock.ftp_user || 'admin'}\n根目录: ${mock.ftp_root_dir}\n\n可使用 FTP 客户端连接管理文件，或通过 API 进行文件操作。`)
     }
   }
 }

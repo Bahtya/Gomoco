@@ -62,17 +62,22 @@ func (m *Manager) Create(req *models.CreateMockAPIRequest) (*models.MockAPI, err
 	}
 
 	mock := &models.MockAPI{
-		ID:       id,
-		Name:     req.Name,
-		Port:     req.Port,
-		Protocol: req.Protocol,
-		CertFile: req.CertFile,
-		KeyFile:  req.KeyFile,
-		Content:  req.Content,
-		Charset:  req.Charset,
-		Path:     req.Path,
-		Method:   req.Method,
-		Status:   "stopped",
+		ID:                  id,
+		Name:                req.Name,
+		Port:                req.Port,
+		Protocol:            req.Protocol,
+		CertFile:            req.CertFile,
+		KeyFile:             req.KeyFile,
+		FTPMode:             req.FTPMode,
+		FTPRootDir:          req.FTPRootDir,
+		FTPUser:             req.FTPUser,
+		FTPPass:             req.FTPPass,
+		FTPPassivePortRange: req.FTPPassivePortRange,
+		Content:             req.Content,
+		Charset:             req.Charset,
+		Path:                req.Path,
+		Method:              req.Method,
+		Status:              "stopped",
 	}
 
 	m.mocks[id] = mock
@@ -201,6 +206,8 @@ func (m *Manager) startServer(mock *models.MockAPI) error {
 		server, err = NewHTTPServer(mock)
 	case models.ProtocolTCP:
 		server, err = NewTCPServer(mock)
+	case models.ProtocolFTP:
+		server, err = NewFTPServer(mock)
 	default:
 		return fmt.Errorf("unsupported protocol: %s", mock.Protocol)
 	}

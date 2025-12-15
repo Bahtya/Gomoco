@@ -50,3 +50,6 @@ certs/
 *.pem
 *.pfx
 *.p12
+
+# FTP data directories
+ftp_data/

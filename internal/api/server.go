@@ -49,6 +49,12 @@ func (s *Server) setupRoutes() {
 		api.GET("/mocks/:id", s.getMock)
 		api.PUT("/mocks/:id", s.updateMock)
 		api.DELETE("/mocks/:id", s.deleteMock)
+
+		// FTP file management
+		api.GET("/mocks/:id/files", s.listFiles)
+		api.GET("/mocks/:id/files/*filepath", s.downloadFile)
+		api.POST("/mocks/:id/files", s.uploadFile)
+		api.DELETE("/mocks/:id/files/*filepath", s.deleteFile)
 	}
 
 	// Serve embedded static files for frontend
