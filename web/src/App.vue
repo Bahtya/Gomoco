@@ -47,6 +47,7 @@
               <option value="https">HTTPS</option>
               <option value="tcp">TCP</option>
               <option value="ftp">FTP</option>
+              <option value="sftp">SFTP</option>
             </select>
           </div>
 
@@ -160,12 +161,58 @@
           </div>
         </div>
 
-        <div class="form-group" v-if="form.protocol !== 'ftp'">
+        <div v-if="form.protocol === 'sftp'">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="sftpRootDir">根目录</label>
+              <input
+                id="sftpRootDir"
+                v-model="form.sftp_root_dir"
+                type="text"
+                placeholder="例如: ./sftp_data/port_22 (留空自动生成)"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="sftpUser">用户名</label>
+              <input
+                id="sftpUser"
+                v-model="form.sftp_user"
+                type="text"
+                placeholder="默认: admin"
+              />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="sftpPass">密码</label>
+              <input
+                id="sftpPass"
+                v-model="form.sftp_pass"
+                type="password"
+                placeholder="默认: admin"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="sftpHostKey">主机密钥文件路径</label>
+              <input
+                id="sftpHostKey"
+                v-model="form.sftp_host_key"
+                type="text"
+                placeholder="留空自动生成 (例如: ./sftp_keys/host_key_22)"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group" v-if="form.protocol !== 'ftp' && form.protocol !== 'sftp'">
           <label for="content">响应内容 *</label>
           <textarea
             id="content"
             v-model="form.content"
-            :required="form.protocol !== 'ftp'"
+            :required="form.protocol !== 'ftp' && form.protocol !== 'sftp'"
             placeholder="输入固定返回的报文内容..."
           ></textarea>
         </div>
@@ -251,14 +298,22 @@
               <span class="detail-label">用户名</span>
               <span class="detail-value">{{ mock.ftp_user }}</span>
             </div>
+            <div v-if="mock.protocol === 'sftp' && mock.sftp_root_dir" class="detail-item">
+              <span class="detail-label">根目录</span>
+              <span class="detail-value">{{ mock.sftp_root_dir }}</span>
+            </div>
+            <div v-if="mock.protocol === 'sftp' && mock.sftp_user" class="detail-item">
+              <span class="detail-label">用户名</span>
+              <span class="detail-value">{{ mock.sftp_user }}</span>
+            </div>
           </div>
 
-          <div class="mock-content" v-if="mock.protocol !== 'ftp'">{{ mock.content }}</div>
+          <div class="mock-content" v-if="mock.protocol !== 'ftp' && mock.protocol !== 'sftp'">{{ mock.content }}</div>
 
           <div class="mock-actions">
             <button class="btn btn-success" @click="editMock(mock)">编辑</button>
             <button class="btn btn-danger" @click="deleteMock(mock.id)">删除</button>
-            <button v-if="mock.protocol === 'ftp'" class="btn btn-info" @click="manageFTPFiles(mock)">文件管理</button>
+            <button v-if="mock.protocol === 'ftp' || mock.protocol === 'sftp'" class="btn btn-info" @click="manageFTPFiles(mock)">文件管理</button>
           </div>
         </div>
       </div>
@@ -290,7 +345,12 @@ export default {
         ftp_root_dir: '',
         ftp_user: '',
         ftp_pass: '',
-        ftp_passive_port_range: ''
+        ftp_passive_port_range: '',
+        sftp_root_dir: '',
+        sftp_user: '',
+        sftp_pass: '',
+        sftp_host_key: '',
+        sftp_private_key: ''
       },
       alert: {
         show: false,
@@ -358,7 +418,12 @@ export default {
         ftp_root_dir: mock.ftp_root_dir || '',
         ftp_user: mock.ftp_user || '',
         ftp_pass: mock.ftp_pass || '',
-        ftp_passive_port_range: mock.ftp_passive_port_range || ''
+        ftp_passive_port_range: mock.ftp_passive_port_range || '',
+        sftp_root_dir: mock.sftp_root_dir || '',
+        sftp_user: mock.sftp_user || '',
+        sftp_pass: mock.sftp_pass || '',
+        sftp_host_key: mock.sftp_host_key || '',
+        sftp_private_key: mock.sftp_private_key || ''
       }
       window.scrollTo({ top: 0, behavior: 'smooth' })
     },
@@ -397,7 +462,12 @@ export default {
         ftp_root_dir: '',
         ftp_user: '',
         ftp_pass: '',
-        ftp_passive_port_range: ''
+        ftp_passive_port_range: '',
+        sftp_root_dir: '',
+        sftp_user: '',
+        sftp_pass: '',
+        sftp_host_key: '',
+        sftp_private_key: ''
       }
     },
     showAlert(type, message) {

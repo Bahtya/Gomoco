@@ -73,6 +73,11 @@ func (m *Manager) Create(req *models.CreateMockAPIRequest) (*models.MockAPI, err
 		FTPUser:             req.FTPUser,
 		FTPPass:             req.FTPPass,
 		FTPPassivePortRange: req.FTPPassivePortRange,
+		SFTPRootDir:         req.SFTPRootDir,
+		SFTPUser:            req.SFTPUser,
+		SFTPPass:            req.SFTPPass,
+		SFTPHostKey:         req.SFTPHostKey,
+		SFTPPrivateKey:      req.SFTPPrivateKey,
 		Content:             req.Content,
 		Charset:             req.Charset,
 		Path:                req.Path,
@@ -208,6 +213,8 @@ func (m *Manager) startServer(mock *models.MockAPI) error {
 		server, err = NewTCPServer(mock)
 	case models.ProtocolFTP:
 		server, err = NewFTPServer(mock)
+	case models.ProtocolSFTP:
+		server, err = NewSFTPServer(mock)
 	default:
 		return fmt.Errorf("unsupported protocol: %s", mock.Protocol)
 	}

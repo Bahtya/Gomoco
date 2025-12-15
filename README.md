@@ -4,9 +4,10 @@ Gomoco 是一个轻量级的 Mock Server 工具，灵感来源于 [Moco](https:/
 
 ## 功能特性
 
-- ✅ 支持 HTTP、HTTPS、TCP 和 FTP 协议
+- ✅ 支持 HTTP、HTTPS、TCP、FTP 和 SFTP 协议
 - ✅ HTTPS 支持自定义 SSL/TLS 证书
 - ✅ FTP 支持主动/被动模式，Web 端文件管理
+- ✅ SFTP 基于 SSH 的安全文件传输，自动生成主机密钥
 - ✅ 文件上传限制 100MB
 - ✅ 支持 UTF-8 和 GBK 字符集编码
 - ✅ 固定报文内容响应
@@ -159,9 +160,9 @@ gomoco [选项]
 2. 填写表单：
    - **API 名称**: 给 Mock API 起一个描述性的名称
    - **端口**: Mock 服务监听的端口 (1-65535)
-   - **协议**: HTTP、HTTPS、TCP 或 FTP
+   - **协议**: HTTP、HTTPS、TCP、FTP 或 SFTP
    - **字符集**: UTF-8 或 GBK
-   - **响应内容**: 固定返回的报文内容（FTP 不需要）
+   - **响应内容**: 固定返回的报文内容（FTP/SFTP 不需要）
    - **路径** (HTTP/HTTPS): HTTP 请求路径，默认为 `/`
    - **方法** (HTTP/HTTPS): HTTP 方法，留空表示任意方法
    - **证书文件** (HTTPS): SSL/TLS 证书文件路径
@@ -171,6 +172,10 @@ gomoco [选项]
    - **用户名** (FTP): FTP 登录用户名，默认 admin
    - **密码** (FTP): FTP 登录密码，默认 admin
    - **被动端口范围** (FTP): 被动模式端口范围，如 50000-50100
+   - **根目录** (SFTP): SFTP 文件根目录，留空自动生成
+   - **用户名** (SFTP): SFTP 登录用户名，默认 admin
+   - **密码** (SFTP): SFTP 登录密码，默认 admin
+   - **主机密钥** (SFTP): SSH 主机密钥文件路径，留空自动生成
 3. 点击"创建 Mock API"
 
 **注意**: 所有配置会自动保存到 `config/mocks.yaml` 文件中，重启后自动恢复。
@@ -261,6 +266,42 @@ curl http://localhost:8080/api/mocks/{mock_id}/files/myfile.txt -O
 curl -X DELETE http://localhost:8080/api/mocks/{mock_id}/files/myfile.txt
 ```
 
+#### SFTP 示例
+```bash
+# 1. 在 Web 界面创建 SFTP Mock API
+# - 协议: SFTP
+# - 端口: 22
+# - 用户名: admin
+# - 密码: admin
+
+# 2. 使用 SFTP 客户端连接
+sftp -P 22 admin@localhost
+# 输入密码: admin
+
+# 3. 或使用命令行工具
+# 列出文件
+echo "ls" | sftp -P 22 admin@localhost
+
+# 4. 上传文件
+echo "put myfile.txt" | sftp -P 22 admin@localhost
+
+# 5. 下载文件
+echo "get myfile.txt" | sftp -P 22 admin@localhost
+
+# 6. 使用 Web API 管理文件（与 FTP 相同）
+# 列出文件
+curl http://localhost:8080/api/mocks/{mock_id}/files
+
+# 上传文件（限制 100MB）
+curl -F "file=@myfile.txt" -F "path=/" http://localhost:8080/api/mocks/{mock_id}/files
+
+# 下载文件
+curl http://localhost:8080/api/mocks/{mock_id}/files/myfile.txt -O
+
+# 删除文件
+curl -X DELETE http://localhost:8080/api/mocks/{mock_id}/files/myfile.txt
+```
+
 ## API 接口
 
 ### 创建 Mock API
@@ -313,6 +354,23 @@ Content-Type: application/json
   "ftp_user": "admin",
   "ftp_pass": "admin123",
   "ftp_passive_port_range": "50000-50100",
+  "charset": "UTF-8"
+}
+```
+
+**SFTP 示例：**
+```http
+POST /api/mocks
+Content-Type: application/json
+
+{
+  "name": "SFTP 文件服务器",
+  "port": 22,
+  "protocol": "sftp",
+  "sftp_root_dir": "./sftp_data/port_22",
+  "sftp_user": "admin",
+  "sftp_pass": "admin123",
+  "sftp_host_key": "./sftp_keys/host_key_22",
   "charset": "UTF-8"
 }
 ```

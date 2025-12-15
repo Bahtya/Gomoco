@@ -21,6 +21,18 @@ type FileInfo struct {
 	Path    string `json:"path"`
 }
 
+// getRootDir returns the root directory based on protocol
+func getRootDir(mock interface {
+	GetProtocol() string
+	GetFTPRootDir() string
+	GetSFTPRootDir() string
+}) string {
+	if mock.GetProtocol() == "sftp" {
+		return mock.GetSFTPRootDir()
+	}
+	return mock.GetFTPRootDir()
+}
+
 // listFiles lists files in FTP directory
 func (s *Server) listFiles(c *gin.Context) {
 	id := c.Param("id")
@@ -30,17 +42,23 @@ func (s *Server) listFiles(c *gin.Context) {
 		return
 	}
 
-	if mock.Protocol != "ftp" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Not an FTP mock API"})
+	if mock.Protocol != "ftp" && mock.Protocol != "sftp" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Not an FTP/SFTP mock API"})
 		return
+	}
+
+	// Get root directory based on protocol
+	rootDir := mock.FTPRootDir
+	if mock.Protocol == "sftp" {
+		rootDir = mock.SFTPRootDir
 	}
 
 	// Get path from query parameter
 	subPath := c.DefaultQuery("path", "")
-	fullPath := filepath.Join(mock.FTPRootDir, subPath)
+	fullPath := filepath.Join(rootDir, subPath)
 
 	// Security check: ensure path is within root directory
-	absRoot, _ := filepath.Abs(mock.FTPRootDir)
+	absRoot, _ := filepath.Abs(rootDir)
 	absPath, _ := filepath.Abs(fullPath)
 	if !strings.HasPrefix(absPath, absRoot) {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
@@ -73,11 +91,11 @@ func (s *Server) listFiles(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"files":        files,
 		"current_path": subPath,
-		"root_dir":     mock.FTPRootDir,
+		"root_dir":     rootDir,
 	})
 }
 
-// downloadFile downloads a file from FTP directory
+// downloadFile downloads a file from FTP/SFTP directory
 func (s *Server) downloadFile(c *gin.Context) {
 	id := c.Param("id")
 	filePath := c.Param("filepath")
@@ -91,15 +109,21 @@ func (s *Server) downloadFile(c *gin.Context) {
 		return
 	}
 
-	if mock.Protocol != "ftp" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Not an FTP mock API"})
+	if mock.Protocol != "ftp" && mock.Protocol != "sftp" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Not an FTP/SFTP mock API"})
 		return
 	}
 
-	fullPath := filepath.Join(mock.FTPRootDir, filePath)
+	// Get root directory based on protocol
+	rootDir := mock.FTPRootDir
+	if mock.Protocol == "sftp" {
+		rootDir = mock.SFTPRootDir
+	}
+
+	fullPath := filepath.Join(rootDir, filePath)
 
 	// Security check
-	absRoot, _ := filepath.Abs(mock.FTPRootDir)
+	absRoot, _ := filepath.Abs(rootDir)
 	absPath, _ := filepath.Abs(fullPath)
 	if !strings.HasPrefix(absPath, absRoot) {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
@@ -129,9 +153,15 @@ func (s *Server) uploadFile(c *gin.Context) {
 		return
 	}
 
-	if mock.Protocol != "ftp" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Not an FTP mock API"})
+	if mock.Protocol != "ftp" && mock.Protocol != "sftp" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Not an FTP/SFTP mock API"})
 		return
+	}
+
+	// Get root directory based on protocol
+	rootDir := mock.FTPRootDir
+	if mock.Protocol == "sftp" {
+		rootDir = mock.SFTPRootDir
 	}
 
 	// Get upload path from form
@@ -153,10 +183,10 @@ func (s *Server) uploadFile(c *gin.Context) {
 	}
 
 	// Construct full path
-	fullPath := filepath.Join(mock.FTPRootDir, uploadPath, file.Filename)
+	fullPath := filepath.Join(rootDir, uploadPath, file.Filename)
 
 	// Security check
-	absRoot, _ := filepath.Abs(mock.FTPRootDir)
+	absRoot, _ := filepath.Abs(rootDir)
 	absPath, _ := filepath.Abs(fullPath)
 	if !strings.HasPrefix(absPath, absRoot) {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
@@ -184,7 +214,7 @@ func (s *Server) uploadFile(c *gin.Context) {
 	})
 }
 
-// deleteFile deletes a file from FTP directory
+// deleteFile deletes a file from FTP/SFTP directory
 func (s *Server) deleteFile(c *gin.Context) {
 	id := c.Param("id")
 	filePath := c.Param("filepath")
@@ -198,15 +228,21 @@ func (s *Server) deleteFile(c *gin.Context) {
 		return
 	}
 
-	if mock.Protocol != "ftp" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Not an FTP mock API"})
+	if mock.Protocol != "ftp" && mock.Protocol != "sftp" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Not an FTP/SFTP mock API"})
 		return
 	}
 
-	fullPath := filepath.Join(mock.FTPRootDir, filePath)
+	// Get root directory based on protocol
+	rootDir := mock.FTPRootDir
+	if mock.Protocol == "sftp" {
+		rootDir = mock.SFTPRootDir
+	}
+
+	fullPath := filepath.Join(rootDir, filePath)
 
 	// Security check
-	absRoot, _ := filepath.Abs(mock.FTPRootDir)
+	absRoot, _ := filepath.Abs(rootDir)
 	absPath, _ := filepath.Abs(fullPath)
 	if !strings.HasPrefix(absPath, absRoot) {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})

@@ -53,3 +53,7 @@ certs/
 
 # FTP data directories
 ftp_data/
+
+# SFTP data and keys
+sftp_data/
+sftp_keys/
